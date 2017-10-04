@@ -1,4 +1,5 @@
 #[macro_use]
+
 extern crate clap;
 use clap::App;
  
@@ -9,11 +10,20 @@ fn main() {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
-    match matches.subcommand_name() {
-        Some("create") => session_handler::create(),
-        Some("show") => session_handler::show(),
-        Some("refresh") => session_handler::refresh(),
-        Some("clean") => session_handler::clean(),
+    match matches.subcommand() {
+        ("create", Some(sub_m)) => {
+            let pName = sub_m.value_of("profile_name").unwrap();
+            session_handler::create(pName);
+        },
+        ("show", _) => {
+            session_handler::show()
+        },
+        ("refresh", _) => {
+            session_handler::refresh()
+        },
+        ("clean",  _) => {
+            session_handler::clean()
+        },
         _ => return
     }
 }

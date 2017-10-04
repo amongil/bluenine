@@ -1,6 +1,6 @@
 pub mod session_handler {
-    pub fn create() {
-        println!("Creating session...");
+    pub fn create(pName: &str) {
+        println!("Creating session for profile \"{}\"...", pName);
     }
 
     pub fn show() {

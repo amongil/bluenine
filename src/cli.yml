@@ -10,7 +10,6 @@ subcommands:
         args:
             - profile_name:
                 required: true
-                index: 1
                 help: Creates a session for the profile
     - show:
         about: Shows sessions
