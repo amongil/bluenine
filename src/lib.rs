@@ -1,11 +1,11 @@
-pub mod session_handler {
+pub mod SessionHandler {
     use std::fs::File;
     use std::io::BufReader;
     use std::io::prelude::*;
     use std::env;
 
-    pub fn create(pName: &str) {
-        println!("Creating session for profile \"{}\"...", pName);
+    pub fn create(profile_name: &str) {
+        println!("Creating session for profile \"{}\"...", profile_name);
         println!("{}",read_aws_config_file());
     }
 
@@ -22,7 +22,7 @@ pub mod session_handler {
     }
 
     fn read_aws_config_file() -> String {
-        let mut path = match env::home_dir() {
+        let path = match env::home_dir() {
             Some(path) => path,
             None => panic!("Could not retrieve user's home directory."),
         };

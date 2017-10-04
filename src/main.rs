@@ -4,7 +4,7 @@ extern crate clap;
 use clap::App;
  
 extern crate bluenine;
-use bluenine::session_handler;
+use bluenine::SessionHandler;
 
 fn main() {
     let yaml = load_yaml!("cli.yml");
@@ -12,17 +12,17 @@ fn main() {
 
     match matches.subcommand() {
         ("create", Some(sub_m)) => {
-            let pName = sub_m.value_of("profile_name").unwrap();
-            session_handler::create(pName);
+            let profile_name = sub_m.value_of("profile_name").unwrap();
+            SessionHandler::create(profile_name);
         },
         ("show", _) => {
-            session_handler::show()
+            SessionHandler::show()
         },
         ("refresh", _) => {
-            session_handler::refresh()
+            SessionHandler::refresh()
         },
         ("clean",  _) => {
-            session_handler::clean()
+            SessionHandler::clean()
         },
         _ => return
     }
