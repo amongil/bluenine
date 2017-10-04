@@ -11,6 +11,6 @@ fn main() {
         Some("show") => println!("show!"),
         Some("refresh") => println!("delete!"),
         Some("clean") => println!("clean!"),
-        _ => println!("You must specify something")
+        _ => return
     }
 }

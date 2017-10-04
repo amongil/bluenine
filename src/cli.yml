@@ -2,6 +2,8 @@ name: bluenine
 version: "0.1"
 author: Alvaro Mongil <hello@alvaromongil.com>
 about: AWS Session Token Manager
+settings:
+  - SubcommandRequired
 subcommands:
     - create:
         about: Creates a session for the profile
@@ -15,6 +17,6 @@ subcommands:
 
     - refresh:
         about: Refreshes sessions
-        
+
     - clean:
         about: Deletes all sessions
