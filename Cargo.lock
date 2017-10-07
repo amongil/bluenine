@@ -3,6 +3,7 @@ name = "bluenine"
 version = "0.1.0"
 dependencies = [
  "clap 2.19.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "regex 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_core 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_dynamodb 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_sts 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",

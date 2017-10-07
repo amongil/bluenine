@@ -12,3 +12,4 @@ clap = {version = "~2.19.0", features = ["yaml"]}
 rusoto_core = "0.28.0"
 rusoto_sts = "0.28.0"
 rusoto_dynamodb = "0.28.0"
+regex = "0.2"
