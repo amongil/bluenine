@@ -69,14 +69,12 @@ pub mod SessionHandler {
         let aws_config_file = read_aws_config_file();
         println!("{}", aws_config_file);
 
-        println!("Showing profiles...");
-        let profiles = get_profile_names(aws_config_file);
+        println!("Spliting...");
+        let profiles = split_config_file(aws_config_file);
         for profile in &profiles {
             println!("{}", profile);
         }
 
-        println!("Spliting...");
-        split_config_file(aws_config_file);
     }
 
     pub fn refresh() {
@@ -102,27 +100,25 @@ pub mod SessionHandler {
         contents
     }
 
-    fn get_profile_names(aws_config: String) -> Vec<String>{
-        let re = Regex::new(r"(?m)(\[profile+.+\])").unwrap();
-        let caps = re.captures(&aws_config).unwrap();
+    // fn get_profile_names(aws_config: String) -> Vec<String>{
+    //     let re = Regex::new(r"(?m)(\[profile+.+\])").unwrap();
+    //     let caps = re.captures(&aws_config).unwrap();
 
-        println!("{:?}", caps);
-        let profile1 = caps.get(0).map_or("", |m| m.as_str());
-        let profile2 = caps.get(1).map_or("", |m| m.as_str());
+    //     println!("{:?}", caps);
+    //     let profile1 = caps.get(0).map_or("", |m| m.as_str());
+    //     let profile2 = caps.get(1).map_or("", |m| m.as_str());
 
-        let mut profiles = Vec::new();
-        profiles.push(profile1.to_string());
-        profiles.push(profile2.to_string());
+    //     let mut profiles = Vec::new();
+    //     profiles.push(profile1.to_string());
+    //     profiles.push(profile2.to_string());
+
+    //     profiles
+    // }
+
+    fn split_config_file(aws_config: String) -> Vec<String> {
+        let split = aws_config.split("\n\n");
+        let profiles: Vec<String> = split.map(|s| s.to_string()).collect();;
 
         profiles
-    }
-
-    fn split_config_file(aws_config: String) {
-        let re = Regex::new(r"(?m)(\[profile+.+\])").unwrap();
-        let chunks: Vec<&str> = re.split(&aws_config).collect();
-
-        for chunk in &chunks {
-            println!("{}", chunk);
-        }
     }
 }
