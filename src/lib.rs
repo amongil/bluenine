@@ -66,15 +66,7 @@ pub mod SessionHandler {
 
     pub fn show() {
         println!("Showing sessions...");
-        let aws_config_file = read_aws_config_file();
-        println!("{}", aws_config_file);
-
-        println!("Spliting...");
-        let profiles = split_config_file(aws_config_file);
-        for profile in &profiles {
-            println!("{}", profile);
-        }
-
+        load_config();
     }
 
     pub fn refresh() {
@@ -85,6 +77,32 @@ pub mod SessionHandler {
         println!("Cleaning sessions...");
     }
 
+    fn load_config() {
+        let aws_config_file = read_aws_config_file();
+
+        println!("Spliting...");
+        let profiles = split_config_file(aws_config_file);
+
+        // Iterate over profile chunks
+        for profile in &profiles {
+            // Create a vector of string that holds each line
+            let split = profile.split("\n");
+            let lines: Vec<String> = split.map(|s| s.to_string()).collect();
+
+            // Get the profile name from the first line
+            let profile_line = lines[0].to_owned();
+            let split2 = profile_line.split(" ");
+            let mut words: Vec<String> = split2.map(|s| s.to_string()).collect();
+            if words.len() > 1 {
+                words[1].pop();
+                println!("{}", words[1].trim_right());
+            }
+
+            for i in 1..lines.len() {
+                println!("{}", lines[i]);
+            }
+        }
+    }
     fn read_aws_config_file() -> String {
         let path = match env::home_dir() {
             Some(path) => path,
