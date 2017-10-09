@@ -17,8 +17,12 @@ pub mod SessionHandler {
 
     use regex::Regex;
 
+    struct SessionHandler {
+        AWSConfig: AWSConfig,
+    }
+
     struct AWSConfig {
-        profiles: Option<Vec<AWSProfile>>,
+        profiles: Vec<AWSProfile>,
     }
 
     struct AWSProfile {
@@ -27,6 +31,45 @@ pub mod SessionHandler {
         output: Option<String>,
         role_arn: Option<String>,
         mfa_serial: Option<String>
+    }
+
+    impl SessionHandler {
+       pub fn new() -> SessionHandler {
+               SessionHandler {
+                   AWSConfig: AWSConfig {
+                       profiles: Vec::new()
+                   }
+               }
+        }
+
+        pub fn load_config(&self) {
+            let aws_config_file = read_aws_config_file();
+
+            println!("Spliting...");
+            let profiles = split_config_file(aws_config_file);
+
+            // Iterate over profile chunks
+            for profile in &profiles {
+                // Create a vector of string that holds each line
+                let split = profile.split("\n");
+                let lines: Vec<String> = split.map(|s| s.to_string()).collect();
+
+                // Get the profile name from the first line
+                let profile_line = lines[0].to_owned();
+                let split2 = profile_line.split(" ");
+                let mut words: Vec<String> = split2.map(|s| s.to_string()).collect();
+                if words.len() > 1 {
+                    words[1].pop();
+                    println!("{}", words[1].trim_right());
+                }
+
+                for i in 1..lines.len() {
+                    let split = lines[i].split(" = ");
+                    let config: Vec<String> = split.map(|s| s.to_string()).collect();
+                    println!("Key: {}, Value: {}", config[0], config[1]);
+                }
+            }
+        }
     }
 
     pub fn create(profile_name: &str) {
@@ -66,7 +109,6 @@ pub mod SessionHandler {
 
     pub fn show() {
         println!("Showing sessions...");
-        load_config();
     }
 
     pub fn refresh() {
@@ -77,32 +119,6 @@ pub mod SessionHandler {
         println!("Cleaning sessions...");
     }
 
-    fn load_config() {
-        let aws_config_file = read_aws_config_file();
-
-        println!("Spliting...");
-        let profiles = split_config_file(aws_config_file);
-
-        // Iterate over profile chunks
-        for profile in &profiles {
-            // Create a vector of string that holds each line
-            let split = profile.split("\n");
-            let lines: Vec<String> = split.map(|s| s.to_string()).collect();
-
-            // Get the profile name from the first line
-            let profile_line = lines[0].to_owned();
-            let split2 = profile_line.split(" ");
-            let mut words: Vec<String> = split2.map(|s| s.to_string()).collect();
-            if words.len() > 1 {
-                words[1].pop();
-                println!("{}", words[1].trim_right());
-            }
-
-            for i in 1..lines.len() {
-                println!("{}", lines[i]);
-            }
-        }
-    }
     fn read_aws_config_file() -> String {
         let path = match env::home_dir() {
             Some(path) => path,

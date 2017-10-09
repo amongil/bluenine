@@ -9,6 +9,8 @@ use bluenine::SessionHandler;
 fn main() {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
+    let mut session_handler = SessionHandler::new();
+    session_handler.load_config();
 
     match matches.subcommand() {
         ("create", Some(sub_m)) => {
