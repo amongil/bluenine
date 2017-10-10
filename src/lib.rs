@@ -16,59 +16,103 @@ pub mod SessionHandler {
     use rusoto_dynamodb::{DynamoDb, DynamoDbClient, ListTablesInput};
 
     use regex::Regex;
+    use std::collections::HashMap;
 
-    struct SessionHandler {
+    pub struct SessionHandler {
         AWSConfig: AWSConfig,
     }
 
     struct AWSConfig {
-        profiles: Vec<AWSProfile>,
+        profiles: HashMap<String, AWSProfile>,
     }
 
+    #[derive(Debug)]
     struct AWSProfile {
         source_profile: Option<String>,
         region: Option<String>,
         output: Option<String>,
         role_arn: Option<String>,
-        mfa_serial: Option<String>
+        mfa_serial: Option<String>,
+        ot_session_name: Option<String>,
+        ot_expiration: Option<String>,
+        ot_source_profile: Option<String>,
+        ot_role_arn: Option<String>,
     }
 
     impl SessionHandler {
-       pub fn new() -> SessionHandler {
-               SessionHandler {
-                   AWSConfig: AWSConfig {
-                       profiles: Vec::new()
-                   }
-               }
-        }
-
-        pub fn load_config(&self) {
+        pub fn load_config(&mut self) {
             let aws_config_file = read_aws_config_file();
-
-            println!("Spliting...");
             let profiles = split_config_file(aws_config_file);
 
+            // Create an instance of the AWSConfig struct
+            let mut aws_config = AWSConfig {
+                profiles: HashMap::new()
+            };
+
             // Iterate over profile chunks
-            for profile in &profiles {
+            for profile in profiles {
                 // Create a vector of string that holds each line
                 let split = profile.split("\n");
                 let lines: Vec<String> = split.map(|s| s.to_string()).collect();
 
                 // Get the profile name from the first line
                 let profile_line = lines[0].to_owned();
+
+                // Lets ignore the default for now
+                if profile_line == "[default]" {
+                    continue;
+                }
+
                 let split2 = profile_line.split(" ");
                 let mut words: Vec<String> = split2.map(|s| s.to_string()).collect();
+                let mut profile_name = String::new();
                 if words.len() > 1 {
                     words[1].pop();
-                    println!("{}", words[1].trim_right());
+                    profile_name = words[1].trim_right().to_owned();
                 }
+
+                let mut aws_profile = AWSProfile{
+                    source_profile: None,
+                    region: None,
+                    output: None,
+                    role_arn: None,
+                    mfa_serial: None,
+                    ot_expiration: None,
+                    ot_session_name: None,
+                    ot_source_profile: None,
+                    ot_role_arn: None,
+                };
 
                 for i in 1..lines.len() {
                     let split = lines[i].split(" = ");
                     let config: Vec<String> = split.map(|s| s.to_string()).collect();
-                    println!("Key: {}, Value: {}", config[0], config[1]);
+                    let key = &config[0];
+                    let value = config[1].to_owned();
+                    match key.as_ref() {
+                        "mfa_serial" => aws_profile.mfa_serial = Some(value),
+                        "output" => aws_profile.output = Some(value),
+                        "region" => aws_profile.region = Some(value),
+                        "role_arn" => aws_profile.role_arn = Some(value),
+                        "source_profile" => aws_profile.source_profile = Some(value),
+                        "ot_session_name" => aws_profile.ot_session_name = Some(value),
+                        "ot_expiration" => aws_profile.ot_expiration = Some(value),
+                        "ot_source_profile" => aws_profile.ot_source_profile = Some(value),
+                        "ot_role_arn" => aws_profile.ot_role_arn = Some(value),
+                        _ => (),
+                    }
+                }
+
+                if profile_name != "" {
+                    aws_config.profiles.insert(profile_name.clone(), aws_profile);
                 }
             }
+
+            self.AWSConfig = aws_config;
+        }
+
+        pub fn show(&self, profile_name: &str) {
+            println!("Showing config for profile {}...", profile_name);
+            println!("{:?}", self.AWSConfig.profiles[profile_name]);
         }
     }
 
@@ -106,10 +150,16 @@ pub mod SessionHandler {
         //     }
         // }
     }
-
-    pub fn show() {
-        println!("Showing sessions...");
+    pub fn new() -> SessionHandler {
+            SessionHandler {
+                AWSConfig: AWSConfig {
+                    profiles: HashMap::new()
+                }
+            }
     }
+    // pub fn show(profile_name: &str) {
+    //     println!("Showing sessions...");
+    // }
 
     pub fn refresh() {
         println!("Refreshing sessions...");
@@ -151,8 +201,9 @@ pub mod SessionHandler {
 
     fn split_config_file(aws_config: String) -> Vec<String> {
         let split = aws_config.split("\n\n");
-        let profiles: Vec<String> = split.map(|s| s.to_string()).collect();;
+        let mut profiles: Vec<String> = split.map(|s| s.to_string()).collect();;
 
+        profiles.pop(); // Remove last element as it is always empty
         profiles
     }
 }

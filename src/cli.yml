@@ -13,7 +13,10 @@ subcommands:
                 help: Creates a session for the profile
     - show:
         about: Shows sessions
-
+        args:
+            - profile_name:
+                required: true
+                help: Shows config for the profile
     - refresh:
         about: Refreshes sessions
 
