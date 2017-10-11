@@ -9,12 +9,10 @@ pub mod SessionHandler {
     use std::io::BufReader;
     use std::io::prelude::*;
     use std::env;
-
-    use rusoto_core::{DefaultCredentialsProvider, Region};
-    use rusoto_core::{default_tls_client, ProfileProvider, ProvideAwsCredentials};
-    use rusoto_sts::{StsClient, StsAssumeRoleSessionCredentialsProvider};
+    use rusoto_core::{DefaultCredentialsProvider, ProfileProvider,
+        ProvideAwsCredentials, Region, default_tls_client};
+    use rusoto_sts::{StsClient, GetSessionTokenRequest, GetSessionTokenResponse, GetSessionTokenError};
     use rusoto_dynamodb::{DynamoDb, DynamoDbClient, ListTablesInput};
-
     use regex::Regex;
     use std::collections::HashMap;
 
@@ -37,6 +35,12 @@ pub mod SessionHandler {
         ot_expiration: Option<String>,
         ot_source_profile: Option<String>,
         ot_role_arn: Option<String>,
+    }
+    
+    impl AWSConfig {
+        fn get_profile(&self, name: &str) -> &AWSProfile {
+            &self.profiles[name]
+        }
     }
 
     impl SessionHandler {
@@ -110,6 +114,30 @@ pub mod SessionHandler {
             self.AWSConfig = aws_config;
         }
 
+        pub fn create(&self, profile_name: &str) {
+            println!("Creating session for profile \"{}\"...", profile_name);
+            //let aws_profile = &self.AWSConfig.profiles[profile_name];
+            let aws_profile = &self.AWSConfig.get_profile(profile_name);
+
+            let mut provider = ProfileProvider::new().unwrap();
+            provider.set_profile(profile_name);
+            // let region = &aws_profile.region;
+            // match region {
+            //     &Some(ref region) => region,
+            //     &None => panic!("You must specify a region for profile {}", profile_name)
+            // };
+            // println!("Region: {:?}", region.as_ref().unwrap());
+            let client = StsClient::new(default_tls_client().unwrap(), provider, Region::EuWest1);
+
+            let mfa_serial = &aws_profile.mfa_serial;
+            println!("MFA: {:?}", mfa_serial.as_ref().unwrap());
+            // if mfa setup
+            // let request = StsClient::GetSessionTokenRequest {
+
+            // };
+            // let response = client.get_session_token();
+        }
+
         pub fn show(&self, profile_name: &str) {
             println!("Showing config for profile {}...", profile_name);
             println!("{:?}", self.AWSConfig.profiles[profile_name]);
@@ -119,37 +147,8 @@ pub mod SessionHandler {
     pub fn create(profile_name: &str) {
         println!("Creating session for profile \"{}\"...", profile_name);
 
-        // let mut profile = ProfileProvider::new().unwrap();
-        // profile.set_profile(profile_name);
-
-        // let sts = StsClient::new(default_tls_client().unwrap(), profile, Region::EuWest1);
-        // let provider = StsAssumeRoleSessionCredentialsProvider::new(
-        //     sts,
-        //     "arn:aws:iam::247901982038:role/CloudreachAdminRole".to_owned(),
-        //     "default".to_owned(),
-        //     None, None, None, None
-        // );
-        // let client = DynamoDbClient::new(default_tls_client().unwrap(), profile, Region::EuWest1);
-        // let list_tables_input: ListTablesInput = Default::default();
-
-        // match client.list_tables(&list_tables_input) {
-        //     Ok(output) => {
-        //         match output.table_names {
-        //             Some(table_name_list) => {
-        //                 println!("Tables in database:");
-
-        //                 for table_name in table_name_list {
-        //                     println!("{}", table_name);
-        //                 }
-        //             }
-        //             None => println!("No tables in database!"),
-        //         }
-        //     }
-        //     Err(error) => {
-        //         println!("Error: {:?}", error);
-        //     }
-        // }
     }
+
     pub fn new() -> SessionHandler {
             SessionHandler {
                 AWSConfig: AWSConfig {
@@ -157,9 +156,6 @@ pub mod SessionHandler {
                 }
             }
     }
-    // pub fn show(profile_name: &str) {
-    //     println!("Showing sessions...");
-    // }
 
     pub fn refresh() {
         println!("Refreshing sessions...");
@@ -183,21 +179,6 @@ pub mod SessionHandler {
 
         contents
     }
-
-    // fn get_profile_names(aws_config: String) -> Vec<String>{
-    //     let re = Regex::new(r"(?m)(\[profile+.+\])").unwrap();
-    //     let caps = re.captures(&aws_config).unwrap();
-
-    //     println!("{:?}", caps);
-    //     let profile1 = caps.get(0).map_or("", |m| m.as_str());
-    //     let profile2 = caps.get(1).map_or("", |m| m.as_str());
-
-    //     let mut profiles = Vec::new();
-    //     profiles.push(profile1.to_string());
-    //     profiles.push(profile2.to_string());
-
-    //     profiles
-    // }
 
     fn split_config_file(aws_config: String) -> Vec<String> {
         let split = aws_config.split("\n\n");

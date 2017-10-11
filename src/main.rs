@@ -16,7 +16,7 @@ fn main() {
     match matches.subcommand() {
         ("create", Some(sub_m)) => {
             let profile_name = sub_m.value_of("profile_name").unwrap();
-            SessionHandler::create(profile_name);
+            session_handler.create(profile_name);
         },
         ("show", Some(sub_m)) => {
             let profile_name = sub_m.value_of("profile_name").unwrap();
