@@ -5,14 +5,15 @@ extern crate rusoto_sts;
 extern crate rusoto_dynamodb;
 
 pub mod SessionHandler {
-    use std::fs::File;
-    use std::io::BufReader;
+    use std::fs::{File, OpenOptions};
+    use std::io::{BufReader, Error};
+    use std::io;
     use std::io::prelude::*;
     use std::io::{stdin, stdout};
     use std::env;
     use rusoto_core::{DefaultCredentialsProvider, ProfileProvider,
         ProvideAwsCredentials, Region, default_tls_client};
-    use rusoto_sts::{Sts, StsClient, GetSessionTokenRequest, GetSessionTokenResponse, GetSessionTokenError};
+    use rusoto_sts::{Sts, StsClient, GetSessionTokenRequest, GetSessionTokenResponse, GetSessionTokenError, Credentials};
     use rusoto_dynamodb::{DynamoDb, DynamoDbClient, ListTablesInput};
     use regex::Regex;
     use std::collections::HashMap;
@@ -147,8 +148,15 @@ pub mod SessionHandler {
                 };
                 let response = client.get_session_token(&request);
                 match response {
-                    Result::Ok(response) => println!("{:?}", response.credentials.unwrap()),
-                    Result::Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
+                    Ok(response) => {
+                        let credentials = response.credentials.unwrap();
+                        println!("{:?}", credentials);
+                        match save_credentials(credentials) {
+                            Ok(_) => println!("Saved to credentials file."),
+                            Err(err) => println!("Error saving credentials to file: {:?}", err)
+                        };
+                    },
+                    Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
                 };
             }
         }
@@ -201,5 +209,19 @@ pub mod SessionHandler {
 
         profiles.pop(); // Remove last element as it is always empty
         profiles
+    }
+
+    fn save_credentials(credentials: Credentials) -> Result<(), io::Error> {
+        let mut aws_credentials_path = env::home_dir().unwrap().display().to_string();
+        aws_credentials_path.push_str("/.aws/credentials"); 
+        let mut file = OpenOptions::new()
+                       .write(true)
+                       .append(true)
+                       .open(aws_credentials_path)
+                       .unwrap();
+
+        
+        try!(file.write_all("Hi from Bluenine!\n".as_bytes()));
+        Ok(())
     }
 }
