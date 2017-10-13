@@ -8,10 +8,11 @@ pub mod SessionHandler {
     use std::fs::File;
     use std::io::BufReader;
     use std::io::prelude::*;
+    use std::io::{stdin, stdout};
     use std::env;
     use rusoto_core::{DefaultCredentialsProvider, ProfileProvider,
         ProvideAwsCredentials, Region, default_tls_client};
-    use rusoto_sts::{StsClient, GetSessionTokenRequest, GetSessionTokenResponse, GetSessionTokenError};
+    use rusoto_sts::{Sts, StsClient, GetSessionTokenRequest, GetSessionTokenResponse, GetSessionTokenError};
     use rusoto_dynamodb::{DynamoDb, DynamoDbClient, ListTablesInput};
     use regex::Regex;
     use std::collections::HashMap;
@@ -130,12 +131,26 @@ pub mod SessionHandler {
             let client = StsClient::new(default_tls_client().unwrap(), provider, Region::EuWest1);
 
             let mfa_serial = &aws_profile.mfa_serial;
-            println!("MFA: {:?}", mfa_serial.as_ref().unwrap());
-            // if mfa setup
-            // let request = StsClient::GetSessionTokenRequest {
+            if mfa_serial.is_some() {
+                print!("Enter AWS MFA code for profile [{}]: ", profile_name);
+                stdout().flush();
+                let mut token_code = String::new();
+                stdin().read_line(&mut token_code)
+                    .ok()
+                    .expect("Couldn't read line");    
+                token_code.pop(); // Remove newline
 
-            // };
-            // let response = client.get_session_token();
+                let request = GetSessionTokenRequest {
+                    duration_seconds: None,
+                    serial_number: Some(mfa_serial.as_ref().unwrap().to_owned()),
+                    token_code: Some(token_code),
+                };
+                let response = client.get_session_token(&request);
+                match response {
+                    Result::Ok(response) => println!("{:?}", response.credentials.unwrap()),
+                    Result::Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
+                };
+            }
         }
 
         pub fn show(&self, profile_name: &str) {
