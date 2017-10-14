@@ -150,8 +150,7 @@ pub mod SessionHandler {
                 match response {
                     Ok(response) => {
                         let credentials = response.credentials.unwrap();
-                        println!("{:?}", credentials);
-                        match save_credentials(credentials) {
+                        match save_credentials(profile_name, credentials) {
                             Ok(_) => println!("Saved to credentials file."),
                             Err(err) => println!("Error saving credentials to file: {:?}", err)
                         };
@@ -211,7 +210,7 @@ pub mod SessionHandler {
         profiles
     }
 
-    fn save_credentials(credentials: Credentials) -> Result<(), io::Error> {
+    fn save_credentials(profile_name: &str, credentials: Credentials) -> Result<(), io::Error> {
         let mut aws_credentials_path = env::home_dir().unwrap().display().to_string();
         aws_credentials_path.push_str("/.aws/credentials"); 
         let mut file = OpenOptions::new()
@@ -220,8 +219,13 @@ pub mod SessionHandler {
                        .open(aws_credentials_path)
                        .unwrap();
 
-        
-        try!(file.write_all("Hi from Bluenine!\n".as_bytes()));
+        let mut creds = String::new();
+        creds.push_str(&format!("[{}-session]\n", profile_name));
+        creds.push_str(&format!("access_key_id = {}\n", credentials.access_key_id));
+        creds.push_str(&format!("expiration = {}\n", credentials.expiration));
+        creds.push_str(&format!("secret_access_key = {}\n", credentials.secret_access_key));
+        creds.push_str(&format!("session_token = {}\n", credentials.session_token));
+        try!(file.write_all(creds.as_bytes()));
         Ok(())
     }
 }
