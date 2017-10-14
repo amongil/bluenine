@@ -6,16 +6,13 @@ extern crate rusoto_dynamodb;
 
 pub mod SessionHandler {
     use std::fs::{File, OpenOptions};
-    use std::io::{BufReader, Error};
+    use std::io::BufReader;
     use std::io;
     use std::io::prelude::*;
     use std::io::{stdin, stdout};
     use std::env;
-    use rusoto_core::{DefaultCredentialsProvider, ProfileProvider,
-        ProvideAwsCredentials, Region, default_tls_client};
+    use rusoto_core::{ProfileProvider, Region, default_tls_client};
     use rusoto_sts::{Sts, StsClient, GetSessionTokenRequest, GetSessionTokenResponse, GetSessionTokenError, Credentials};
-    use rusoto_dynamodb::{DynamoDb, DynamoDbClient, ListTablesInput};
-    use regex::Regex;
     use std::collections::HashMap;
 
     pub struct SessionHandler {
@@ -118,7 +115,6 @@ pub mod SessionHandler {
 
         pub fn create(&self, profile_name: &str) {
             println!("Creating session for profile \"{}\"...", profile_name);
-            //let aws_profile = &self.AWSConfig.profiles[profile_name];
             let aws_profile = &self.AWSConfig.get_profile(profile_name);
 
             let mut provider = ProfileProvider::new().unwrap();
@@ -149,6 +145,10 @@ pub mod SessionHandler {
                 let response = client.get_session_token(&request);
                 match response {
                     Ok(response) => {
+                        match save_profile(profile_name, &aws_profile) {
+                            Ok(_) => println!("Saved profile to config file."),
+                            Err(err) => println!("Error saving profile config to file: {:?}", err)
+                        };
                         let credentials = response.credentials.unwrap();
                         match save_credentials(profile_name, credentials) {
                             Ok(_) => println!("Saved to credentials file."),
@@ -221,11 +221,40 @@ pub mod SessionHandler {
 
         let mut creds = String::new();
         creds.push_str(&format!("[{}-session]\n", profile_name));
-        creds.push_str(&format!("access_key_id = {}\n", credentials.access_key_id));
+        creds.push_str(&format!("aws_access_key_id = {}\n", credentials.access_key_id));
         creds.push_str(&format!("expiration = {}\n", credentials.expiration));
-        creds.push_str(&format!("secret_access_key = {}\n", credentials.secret_access_key));
-        creds.push_str(&format!("session_token = {}\n", credentials.session_token));
+        creds.push_str(&format!("aws_secret_access_key = {}\n", credentials.secret_access_key));
+        creds.push_str(&format!("aws_session_token = {}\n", credentials.session_token));
         try!(file.write_all(creds.as_bytes()));
         Ok(())
+    }
+
+    fn save_profile(profile_name: &str, aws_profile: &AWSProfile) -> Result<(), io::Error> {
+        let mut aws_config_path = env::home_dir().unwrap().display().to_string();
+        aws_config_path.push_str("/.aws/config"); 
+        let mut file = OpenOptions::new()
+                       .write(true)
+                       .append(true)
+                       .open(aws_config_path)
+                       .unwrap();
+
+        let region = &aws_profile.region;
+        match region {
+            &Some(ref region) => {
+                let mut prof = String::new();
+                prof.push_str(&format!("[profile {}-session]\n", profile_name));
+                prof.push_str(&format!("region = {:?}\n", region));
+                try!(file.write_all(prof.as_bytes()));
+                Ok(())
+            },
+            &None => {
+                let region = "us-east-1";
+                let mut prof = String::new();
+                prof.push_str(&format!("[{}-session]\n", profile_name));
+                prof.push_str(&format!("region = {:?}\n", region));
+                try!(file.write_all(prof.as_bytes()));
+                Ok(())
+            },
+        }
     }
 }
