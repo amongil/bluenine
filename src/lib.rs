@@ -243,7 +243,7 @@ pub mod SessionHandler {
             &Some(ref region) => {
                 let mut prof = String::new();
                 prof.push_str(&format!("[profile {}-session]\n", profile_name));
-                prof.push_str(&format!("region = {:?}\n", region));
+                prof.push_str(&format!("region = {}\n", region));
                 try!(file.write_all(prof.as_bytes()));
                 Ok(())
             },
@@ -251,7 +251,7 @@ pub mod SessionHandler {
                 let region = "us-east-1";
                 let mut prof = String::new();
                 prof.push_str(&format!("[{}-session]\n", profile_name));
-                prof.push_str(&format!("region = {:?}\n", region));
+                prof.push_str(&format!("region = {}\n", region));
                 try!(file.write_all(prof.as_bytes()));
                 Ok(())
             },
