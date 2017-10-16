@@ -34,13 +34,34 @@ pub mod SessionHandler {
     
     impl AWSConfig {
         fn get_profile(&self, name: &str) -> &AWSProfile {
-            &self.profiles[name]
+            if (&self.profiles).contains_key(name) {
+                &self.profiles[name]
+            }
+            else {
+                panic!("Could not find profile {}", name);
+            }
+        }
+
+        fn contains_profile(&self, name: &str) -> bool {
+            if (&self.profiles).contains_key(name) {
+                true
+            }
+            else {
+                false
+            }
         }
     }
 
     pub fn create(profile_name: &str) {
         println!("Loading config file");
         let aws_config = load_config();
+        
+        let mut session_name = profile_name.clone().to_string();
+        session_name.push_str("-session");
+        if aws_config.contains_profile(&session_name) {
+            println!("Session {} for profile {} already exists", session_name, profile_name);
+        }
+
         println!("Creating session for profile \"{}\"...", profile_name);
         let aws_profile = aws_config.get_profile(profile_name);
 
@@ -205,7 +226,7 @@ pub mod SessionHandler {
         creds.push_str(&format!("aws_access_key_id = {}\n", credentials.access_key_id));
         creds.push_str(&format!("expiration = {}\n", credentials.expiration));
         creds.push_str(&format!("aws_secret_access_key = {}\n", credentials.secret_access_key));
-        creds.push_str(&format!("aws_session_token = {}\n", credentials.session_token));
+        creds.push_str(&format!("aws_session_token = {}\n\n", credentials.session_token));
         try!(file.write_all(creds.as_bytes()));
         Ok(())
     }
@@ -224,15 +245,15 @@ pub mod SessionHandler {
             &Some(ref region) => {
                 let mut prof = String::new();
                 prof.push_str(&format!("[profile {}-session]\n", profile_name));
-                prof.push_str(&format!("region = {}\n", region));
+                prof.push_str(&format!("region = {}\n\n", region));
                 try!(file.write_all(prof.as_bytes()));
                 Ok(())
             },
             &None => {
                 let region = "us-east-1";
                 let mut prof = String::new();
-                prof.push_str(&format!("[{}-session]\n", profile_name));
-                prof.push_str(&format!("region = {}\n", region));
+                prof.push_str(&format!("[profile {}-session]\n", profile_name));
+                prof.push_str(&format!("region = {}\n\n", region));
                 try!(file.write_all(prof.as_bytes()));
                 Ok(())
             },
