@@ -33,6 +33,107 @@ pub mod SessionHandler {
     }
     
     impl AWSConfig {
+        fn save(&self) -> Result<(), io::Error> {
+            println!("Saving config to disk");
+            let mut bluenine_config_path = env::home_dir().unwrap().display().to_string();
+            bluenine_config_path.push_str("/.aws/bluenine_config"); 
+            let mut file = OpenOptions::new()
+                        .write(true)
+                        .append(false)
+                        .open(bluenine_config_path)
+                        .unwrap();
+
+            let mut prof = String::new();
+            for (name, profile) in &self.profiles {
+                prof.push_str(&format!("[profile {}]\n", name));
+
+                let source_profile = &profile.source_profile;
+                match source_profile {
+                    &Some(ref source_profile) => {
+                        prof.push_str(&format!("source_profile = {}\n", source_profile));
+                    },
+                    &None => {},
+                };
+
+                let region = &profile.region;
+                match region {
+                    &Some(ref region) => {
+                        prof.push_str(&format!("region = {}\n", region));
+                    },
+                    &None => {},
+                };
+
+                let output = &profile.output;
+                match output {
+                    &Some(ref output) => {
+                        prof.push_str(&format!("output = {}\n", output));
+                    },
+                    &None => {},
+                };
+
+                let role_arn = &profile.role_arn;
+                match role_arn {
+                    &Some(ref role_arn) => {
+                        prof.push_str(&format!("role_arn = {}\n", role_arn));
+                    },
+                    &None => {},
+                };
+
+                let mfa_serial = &profile.mfa_serial;
+                match mfa_serial {
+                    &Some(ref mfa_serial) => {
+                        prof.push_str(&format!("mfa_serial = {}\n", mfa_serial));
+                    },
+                    &None => {},
+                };
+
+                let ot_session_name = &profile.ot_session_name;
+                match ot_session_name {
+                    &Some(ref ot_session_name) => {
+                        prof.push_str(&format!("ot_session_name = {}\n", ot_session_name));
+                    },
+                    &None => {},
+                };
+
+                let ot_expiration = &profile.ot_expiration;
+                match ot_expiration {
+                    &Some(ref ot_expiration) => {
+                        prof.push_str(&format!("ot_expiration = {}\n", ot_expiration));
+                    },
+                    &None => {},
+                };
+
+                let ot_expiration = &profile.ot_expiration;
+                match ot_expiration {
+                    &Some(ref ot_expiration) => {
+                        prof.push_str(&format!("ot_expiration = {}\n", ot_expiration));
+                    },
+                    &None => {},
+                };
+
+                let ot_source_profile = &profile.ot_source_profile;
+                match ot_source_profile {
+                    &Some(ref ot_source_profile) => {
+                        prof.push_str(&format!("ot_source_profile = {}\n", ot_source_profile));
+                    },
+                    &None => {},
+                };
+
+                let ot_role_arn = &profile.ot_role_arn;
+                match ot_role_arn {
+                    &Some(ref ot_role_arn) => {
+                        prof.push_str(&format!("ot_role_arn = {}\n", ot_role_arn));
+                    },
+                    &None => {},
+                };
+
+                prof.push_str("\n");
+            }
+
+            try!(file.write_all(prof.as_bytes()));
+            Ok(())
+        }
+
         fn get_profile(&self, name: &str) -> &AWSProfile {
             if (&self.profiles).contains_key(name) {
                 &self.profiles[name]
@@ -41,6 +142,10 @@ pub mod SessionHandler {
                 panic!("Could not find profile {}", name);
             }
         }
+
+        // fn remove_profile(&self, name: &str) {
+        //     &self.profiles.remove(name);
+        // }
 
         fn contains_profile(&self, name: &str) -> bool {
             if (&self.profiles).contains_key(name) {
@@ -115,8 +220,20 @@ pub mod SessionHandler {
         println!("Refreshing sessions...");
     }
 
-    pub fn clean() {
-        println!("Cleaning sessions...");
+    pub fn clean(profile_name: &str) {
+        println!("Loading config file");
+        let mut aws_config = load_config();
+        let mut session_name = profile_name.clone().to_string();
+        session_name.push_str("-session");
+
+        if aws_config.contains_profile(&session_name) {
+            println!("Cleaning session {}", session_name);
+            aws_config.profiles.remove(&session_name);
+            aws_config.save();
+        }
+        else {
+            println!("No profiles to clean");
+        }
     }
 
     fn load_config() -> AWSConfig {

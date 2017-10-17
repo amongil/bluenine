@@ -22,3 +22,7 @@ subcommands:
 
     - clean:
         about: Deletes all sessions
+        args:
+            - profile_name:
+                required: true
+                help: Removes config for the profile

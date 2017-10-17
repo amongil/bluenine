@@ -20,10 +20,11 @@ fn main() {
             SessionHandler::show(profile_name);
         },
         ("refresh", _) => {
-            SessionHandler::refresh()
+            SessionHandler::refresh();
         },
-        ("clean",  _) => {
-            SessionHandler::clean()
+        ("clean", Some(sub_m)) => {
+            let profile_name = sub_m.value_of("profile_name").unwrap();
+            SessionHandler::clean(profile_name);
         },
         _ => return
     }
