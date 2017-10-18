@@ -36,7 +36,7 @@ pub mod SessionHandler {
         fn save(&self) -> Result<(), io::Error> {
             println!("Saving config to disk");
             let mut bluenine_config_path = env::home_dir().unwrap().display().to_string();
-            bluenine_config_path.push_str("/.aws/bluenine_config"); 
+            bluenine_config_path.push_str("/.aws/config"); 
             let mut file = OpenOptions::new()
                         .write(true)
                         .truncate(true)
@@ -309,7 +309,7 @@ pub mod SessionHandler {
             Some(path) => path,
             None => panic!("Could not retrieve user's home directory."),
         };
-        let config_file_path = format!("{}/.aws/bluenine_config", path.display());
+        let config_file_path = format!("{}/.aws/config", path.display());
 
         let f = File::open(config_file_path).expect("Could not find AWS config file.");
         let mut buf_reader = BufReader::new(f);
@@ -324,7 +324,7 @@ pub mod SessionHandler {
             Some(path) => path,
             None => panic!("Could not retrieve user's home directory."),
         };
-        let config_file_path = format!("{}/.aws/bluenine_credentials", path.display());
+        let config_file_path = format!("{}/.aws/credentials", path.display());
 
         let f = File::open(config_file_path).expect("Could not find AWS credentials file.");
         let mut buf_reader = BufReader::new(f);
@@ -344,7 +344,7 @@ pub mod SessionHandler {
 
     fn save_credentials(profile_name: &str, credentials: Credentials) -> Result<(), io::Error> {
         let mut aws_credentials_path = env::home_dir().unwrap().display().to_string();
-        aws_credentials_path.push_str("/.aws/bluenine_credentials"); 
+        aws_credentials_path.push_str("/.aws/credentials"); 
         let mut file = OpenOptions::new()
                        .write(true)
                        .append(true)
@@ -366,7 +366,7 @@ pub mod SessionHandler {
         let aws_credentials_file = read_aws_credentials_file();
         let credentials = split_config_file(aws_credentials_file);
         let mut aws_credentials_path = env::home_dir().unwrap().display().to_string();
-        aws_credentials_path.push_str("/.aws/bluenine_credentials"); 
+        aws_credentials_path.push_str("/.aws/credentials"); 
         let mut file = OpenOptions::new()
                 .write(true)
                 .truncate(true)
@@ -392,7 +392,7 @@ pub mod SessionHandler {
 
     fn save_profile(profile_name: &str, aws_profile: &AWSProfile) -> Result<(), io::Error> {
         let mut aws_config_path = env::home_dir().unwrap().display().to_string();
-        aws_config_path.push_str("/.aws/bluenine_config"); 
+        aws_config_path.push_str("/.aws/config"); 
         let mut file = OpenOptions::new()
                        .write(true)
                        .append(true)
