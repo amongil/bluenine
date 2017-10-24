@@ -12,7 +12,9 @@ pub mod SessionHandler {
     use std::io::{stdin, stdout};
     use std::env;
     use rusoto_core::{ProfileProvider, Region, default_tls_client};
-    use rusoto_sts::{Sts, StsClient, GetSessionTokenRequest, GetSessionTokenResponse, GetSessionTokenError, Credentials};
+    use rusoto_sts::{Sts, StsClient, GetSessionTokenRequest, GetSessionTokenResponse, 
+        GetSessionTokenError, AssumeRoleRequest, AssumeRoleResponse, AssumeRoleError, Credentials};
+
     use std::collections::HashMap;
 
     struct AWSConfig {
@@ -166,47 +168,91 @@ pub mod SessionHandler {
         println!("Creating session for profile \"{}\"...", profile_name);
         let aws_profile = aws_config.get_profile(profile_name);
 
-        let mut provider = ProfileProvider::new().unwrap();
-        provider.set_profile(profile_name);
-        // let region = &aws_profile.region;
-        // match region {
-        //     &Some(ref region) => region,
-        //     &None => panic!("You must specify a region for profile {}", profile_name)
-        // };
-        // println!("Region: {:?}", region.as_ref().unwrap());
-        let client = StsClient::new(default_tls_client().unwrap(), provider, Region::EuWest1);
+        // Check if this is a child profile
+        let source_profile = &aws_profile.source_profile;
+        match source_profile {
+            &Some(ref source_profile) => {
+                println!("This is a child profile");
+                let mut session_name = source_profile.clone().to_string();
+                session_name.push_str("-session");
+                if aws_config.contains_profile(&session_name) {
+                    println!("Session {} for profile {} already exists", session_name, source_profile);
+                    let mut provider = ProfileProvider::new().unwrap();
+                    provider.set_profile(session_name);
+                    let client = StsClient::new(default_tls_client().unwrap(), provider, Region::EuWest1);
 
-        let mfa_serial = &aws_profile.mfa_serial;
-        if mfa_serial.is_some() {
-            print!("Enter AWS MFA code for profile [{}]: ", profile_name);
-            stdout().flush();
-            let mut token_code = String::new();
-            stdin().read_line(&mut token_code)
-                .ok()
-                .expect("Couldn't read line");    
-            token_code.pop(); // Remove newline
+                    let mut role_arn = &aws_profile.role_arn;
+                    let role_arn_string = role_arn.as_ref().unwrap();
+                    let v: Vec<&str> = role_arn_string.split('/').collect();
 
-            let request = GetSessionTokenRequest {
-                duration_seconds: None,
-                serial_number: Some(mfa_serial.as_ref().unwrap().to_owned()),
-                token_code: Some(token_code),
-            };
-            let response = client.get_session_token(&request);
-            match response {
-                Ok(response) => {
-                    match save_profile(profile_name, &aws_profile) {
-                        Ok(_) => println!("Saved profile to config file."),
-                        Err(err) => println!("Error saving profile config to file: {:?}", err)
+                    let request = AssumeRoleRequest {
+                        duration_seconds: None,
+                        external_id: None,
+                        policy: None,
+                        role_arn: role_arn_string.to_owned(),
+                        role_session_name: v[1].to_owned(),
+                        serial_number: None,
+                        token_code: None,
                     };
-                    let credentials = response.credentials.unwrap();
-                    match save_credentials(profile_name, credentials) {
-                        Ok(_) => println!("Saved to credentials file."),
-                        Err(err) => println!("Error saving credentials to file: {:?}", err)
+                    let response = client.assume_role(&request);
+                    match response {
+                        Ok(response) => {
+                            match save_profile(profile_name, &aws_profile) {
+                                Ok(_) => println!("Saved profile to config file."),
+                                Err(err) => println!("Error saving profile config to file: {:?}", err)
+                            };
+                            let credentials = response.credentials.unwrap();
+                            match save_credentials(profile_name, credentials) {
+                                Ok(_) => println!("Saved to credentials file."),
+                                Err(err) => println!("Error saving credentials to file: {:?}", err)
+                            };
+                        },
+                        Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
                     };
-                },
-                Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
-            };
-        }
+                }
+                else {
+                    println!("Parent profile does not exist. Will have to create it");
+                    return;
+                }
+            },
+            &None => {
+                let mut provider = ProfileProvider::new().unwrap();
+                provider.set_profile(profile_name);
+                let client = StsClient::new(default_tls_client().unwrap(), provider, Region::EuWest1);
+
+                let mfa_serial = &aws_profile.mfa_serial;
+                if mfa_serial.is_some() {
+                    print!("Enter AWS MFA code for profile [{}]: ", profile_name);
+                    stdout().flush();
+                    let mut token_code = String::new();
+                    stdin().read_line(&mut token_code)
+                        .ok()
+                        .expect("Couldn't read line");    
+                    token_code.pop(); // Remove newline
+
+                    let request = GetSessionTokenRequest {
+                        duration_seconds: None,
+                        serial_number: Some(mfa_serial.as_ref().unwrap().to_owned()),
+                        token_code: Some(token_code),
+                    };
+                    let response = client.get_session_token(&request);
+                    match response {
+                        Ok(response) => {
+                            match save_profile(profile_name, &aws_profile) {
+                                Ok(_) => println!("Saved profile to config file."),
+                                Err(err) => println!("Error saving profile config to file: {:?}", err)
+                            };
+                            let credentials = response.credentials.unwrap();
+                            match save_credentials(profile_name, credentials) {
+                                Ok(_) => println!("Saved to credentials file."),
+                                Err(err) => println!("Error saving credentials to file: {:?}", err)
+                            };
+                        },
+                        Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
+                    };
+                }
+            },
+        };
     }
     pub fn show(profile_name: &str) {
         println!("Showing config for profile {}...", profile_name);
