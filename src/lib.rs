@@ -28,10 +28,6 @@ pub mod SessionHandler {
         output: Option<String>,
         role_arn: Option<String>,
         mfa_serial: Option<String>,
-        ot_session_name: Option<String>,
-        ot_expiration: Option<String>,
-        ot_source_profile: Option<String>,
-        ot_role_arn: Option<String>,
     }
     
     impl AWSConfig {
@@ -85,46 +81,6 @@ pub mod SessionHandler {
                 match mfa_serial {
                     &Some(ref mfa_serial) => {
                         prof.push_str(&format!("mfa_serial = {}\n", mfa_serial));
-                    },
-                    &None => {},
-                };
-
-                let ot_session_name = &profile.ot_session_name;
-                match ot_session_name {
-                    &Some(ref ot_session_name) => {
-                        prof.push_str(&format!("ot_session_name = {}\n", ot_session_name));
-                    },
-                    &None => {},
-                };
-
-                let ot_expiration = &profile.ot_expiration;
-                match ot_expiration {
-                    &Some(ref ot_expiration) => {
-                        prof.push_str(&format!("ot_expiration = {}\n", ot_expiration));
-                    },
-                    &None => {},
-                };
-
-                let ot_expiration = &profile.ot_expiration;
-                match ot_expiration {
-                    &Some(ref ot_expiration) => {
-                        prof.push_str(&format!("ot_expiration = {}\n", ot_expiration));
-                    },
-                    &None => {},
-                };
-
-                let ot_source_profile = &profile.ot_source_profile;
-                match ot_source_profile {
-                    &Some(ref ot_source_profile) => {
-                        prof.push_str(&format!("ot_source_profile = {}\n", ot_source_profile));
-                    },
-                    &None => {},
-                };
-
-                let ot_role_arn = &profile.ot_role_arn;
-                match ot_role_arn {
-                    &Some(ref ot_role_arn) => {
-                        prof.push_str(&format!("ot_role_arn = {}\n", ot_role_arn));
                     },
                     &None => {},
                 };
@@ -259,7 +215,7 @@ pub mod SessionHandler {
         println!("Loading config file");
         let aws_config = load_config();
         println!("Active sessions:\n");
-        
+
         for (name, aws_profile) in aws_config.profiles {
             if name.contains("-session") {
                 println!("{}", name);
@@ -322,10 +278,6 @@ pub mod SessionHandler {
                 output: None,
                 role_arn: None,
                 mfa_serial: None,
-                ot_expiration: None,
-                ot_session_name: None,
-                ot_source_profile: None,
-                ot_role_arn: None,
             };
 
             for i in 1..lines.len() {
@@ -339,10 +291,6 @@ pub mod SessionHandler {
                     "region" => aws_profile.region = Some(value),
                     "role_arn" => aws_profile.role_arn = Some(value),
                     "source_profile" => aws_profile.source_profile = Some(value),
-                    "ot_session_name" => aws_profile.ot_session_name = Some(value),
-                    "ot_expiration" => aws_profile.ot_expiration = Some(value),
-                    "ot_source_profile" => aws_profile.ot_source_profile = Some(value),
-                    "ot_role_arn" => aws_profile.ot_role_arn = Some(value),
                     _ => (),
                 }
             }
