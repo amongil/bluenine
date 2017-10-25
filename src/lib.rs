@@ -258,10 +258,6 @@ pub mod SessionHandler {
         println!("Showing config for profile {}...", profile_name);
     }
 
-    pub fn refresh() {
-        println!("Refreshing sessions...");
-    }
-
     pub fn clean(profile_name: &str) {
         println!("Loading config file");
         let mut aws_config = load_config();
