@@ -18,7 +18,11 @@ subcommands:
                 required: true
                 help: Shows config for the profile
     - refresh:
-        about: Refreshes sessions
+        about: Refreshes session for the profile
+        args:
+            - profile_name:
+                required: true
+                help: Refreshes session for the profile
 
     - clean:
         about: Deletes all sessions
