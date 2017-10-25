@@ -1,10 +1,12 @@
 extern crate regex;
+extern crate time;
 
 extern crate rusoto_core;
 extern crate rusoto_sts;
 extern crate rusoto_dynamodb;
 
 pub mod SessionHandler {
+    use time;
     use std::fs::{File, OpenOptions};
     use std::io::BufReader;
     use std::io;
@@ -215,10 +217,29 @@ pub mod SessionHandler {
         println!("Loading config file");
         let aws_config = load_config();
         println!("Active sessions:\n");
+        let sys_time = time::now_utc();
+        println!("Current time: {}:{}:{}Z", format!("{:02}", sys_time.tm_hour), format!("{:02}", sys_time.tm_min),
+            format!("{:02}", sys_time.tm_sec));
 
         for (name, aws_profile) in aws_config.profiles {
             if name.contains("-session") {
-                println!("{}", name);
+                let mut expiration_time = get_expiration_time(&name);
+                if expiration_time.is_ok() {
+                    let expiration_time = expiration_time.unwrap();
+                    let split = expiration_time.split("T");
+                    let mut parts: Vec<String> = split.map(|s| s.to_string()).collect();
+                    parts[1].pop(); // we know its utc
+
+                    let time_split = parts[1].split(":");
+                    let mut times: Vec<String> = time_split.map(|s| s.to_string()).collect();
+                    let hour: i32 = times[0].parse().unwrap();
+                    let min: i32 = times[1].parse().unwrap();
+                    let sec: i32 = times[2].parse().unwrap();
+                    println!("Session \"{}\" expiring on {:02}:{:02}:{:02}Z", name, hour, min, sec);
+                }
+                else {
+                    println!("Session \"{}\" expiring on Unknown", name);
+                }
             }
         }
     }
@@ -387,6 +408,33 @@ pub mod SessionHandler {
         }
         try!(file.write_all(creds.as_bytes()));
         Ok(())
+    }
+
+    fn get_expiration_time(profile_name: &str) -> Result<(String), io::Error> {
+        let aws_credentials_file = read_aws_credentials_file();
+        let credentials = split_config_file(aws_credentials_file);
+        let mut expiration_time = String::new();
+
+        for credential in credentials {
+            let split = credential.split("\n");
+            let lines: Vec<String> = split.map(|s| s.to_string()).collect();
+
+            // Get the profile name from the first line
+            let profile_line = lines[0].to_owned();
+            if profile_line != format!("[{}]", profile_name) {
+                continue;
+            }
+            for i in 1..lines.len() {
+                let split = lines[i].split(" = ");
+                let config: Vec<String> = split.map(|s| s.to_string()).collect();
+                let key = &config[0];
+                if key == "expiration" {
+                    expiration_time = config[1].to_owned();
+                }
+            }
+        }
+
+        Ok(expiration_time)
     }
 
     fn save_profile(profile_name: &str, aws_profile: &AWSProfile) -> Result<(), io::Error> {
