@@ -15,9 +15,8 @@ fn main() {
             let profile_name = sub_m.value_of("profile_name").unwrap();
             SessionHandler::create(profile_name);
         },
-        ("show", Some(sub_m)) => {
-            let profile_name = sub_m.value_of("profile_name").unwrap();
-            SessionHandler::show(profile_name);
+        ("show", _)=> {
+            SessionHandler::show();
         },
         ("refresh", Some(sub_m)) => {
             let profile_name = sub_m.value_of("profile_name").unwrap();

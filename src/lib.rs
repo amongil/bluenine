@@ -254,8 +254,17 @@ pub mod SessionHandler {
             },
         };
     }
-    pub fn show(profile_name: &str) {
-        println!("Showing config for profile {}...", profile_name);
+    pub fn show() {
+        println!("Showing bluenine sessions...");
+        println!("Loading config file");
+        let aws_config = load_config();
+        println!("Active sessions:\n");
+        
+        for (name, aws_profile) in aws_config.profiles {
+            if name.contains("-session") {
+                println!("{}", name);
+            }
+        }
     }
 
     pub fn clean(profile_name: &str) {
