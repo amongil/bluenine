@@ -169,8 +169,8 @@ pub mod SessionHandler {
                     };
                 }
                 else {
-                    println!("Parent profile does not exist. Will have to create it");
-                    return;
+                    create(source_profile);
+                    create(profile_name);
                 }
             },
             &None => {
