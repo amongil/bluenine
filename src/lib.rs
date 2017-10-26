@@ -34,7 +34,6 @@ pub mod SessionHandler {
     
     impl AWSConfig {
         fn save(&self) -> Result<(), io::Error> {
-            println!("Saving config to disk");
             let mut bluenine_config_path = env::home_dir().unwrap().display().to_string();
             bluenine_config_path.push_str("/.aws/config"); 
             let mut file = OpenOptions::new()
@@ -114,27 +113,24 @@ pub mod SessionHandler {
     }
 
     pub fn create(profile_name: &str) {
-        println!("Loading config file");
         let aws_config = load_config();
         
         let mut session_name = profile_name.clone().to_string();
         session_name.push_str("-session");
         if aws_config.contains_profile(&session_name) {
-            println!("Session {} for profile {} already exists", session_name, profile_name);
+            println!("Session {} for profile {} already exists. Did you mean \"bluenine refresh {}\"?", session_name, profile_name, profile_name);
+            return;
         }
 
-        println!("Creating session for profile \"{}\"...", profile_name);
         let aws_profile = aws_config.get_profile(profile_name);
 
         // Check if this is a child profile
         let source_profile = &aws_profile.source_profile;
         match source_profile {
             &Some(ref source_profile) => {
-                println!("This is a child profile");
                 let mut session_name = source_profile.clone().to_string();
                 session_name.push_str("-session");
                 if aws_config.contains_profile(&session_name) {
-                    println!("Session {} for profile {} already exists", session_name, source_profile);
                     let mut provider = ProfileProvider::new().unwrap();
                     provider.set_profile(session_name);
                     let client = StsClient::new(default_tls_client().unwrap(), provider, Region::EuWest1);
@@ -156,14 +152,15 @@ pub mod SessionHandler {
                     match response {
                         Ok(response) => {
                             match save_profile(profile_name, &aws_profile) {
-                                Ok(_) => println!("Saved profile to config file."),
+                                Ok(_) => {},
                                 Err(err) => println!("Error saving profile config to file: {:?}", err)
                             };
                             let credentials = response.credentials.unwrap();
                             match save_credentials(profile_name, credentials) {
-                                Ok(_) => println!("Saved to credentials file."),
+                                Ok(_) => {},
                                 Err(err) => println!("Error saving credentials to file: {:?}", err)
                             };
+                            show();
                         },
                         Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
                     };
@@ -197,14 +194,15 @@ pub mod SessionHandler {
                     match response {
                         Ok(response) => {
                             match save_profile(profile_name, &aws_profile) {
-                                Ok(_) => println!("Saved profile to config file."),
+                                Ok(_) => {},
                                 Err(err) => println!("Error saving profile config to file: {:?}", err)
                             };
                             let credentials = response.credentials.unwrap();
                             match save_credentials(profile_name, credentials) {
-                                Ok(_) => println!("Saved to credentials file."),
+                                Ok(_) => {},
                                 Err(err) => println!("Error saving credentials to file: {:?}", err)
                             };
+                            show();
                         },
                         Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
                     };
@@ -213,14 +211,11 @@ pub mod SessionHandler {
         };
     }
     pub fn show() {
-        println!("Showing bluenine sessions...");
-        println!("Loading config file");
         let aws_config = load_config();
-        println!("Active sessions:\n");
         let sys_time = time::now_utc();
         println!("Current time: {}:{}:{}Z", format!("{:02}", sys_time.tm_hour), format!("{:02}", sys_time.tm_min),
             format!("{:02}", sys_time.tm_sec));
-
+        println!("Active sessions:\n");
         for (name, aws_profile) in aws_config.profiles {
             if name.contains("-session") {
                 let mut expiration_time = get_expiration_time(&name);
@@ -245,20 +240,15 @@ pub mod SessionHandler {
     }
 
     pub fn clean(profile_name: &str) {
-        println!("Loading config file");
         let mut aws_config = load_config();
         let mut session_name = profile_name.clone().to_string();
         session_name.push_str("-session");
 
         if aws_config.contains_profile(&session_name) {
-            println!("Cleaning session {}", session_name);
             aws_config.profiles.remove(&session_name);
             aws_config.save();
             // Remove credentials also
             remove_credentials(&session_name);
-        }
-        else {
-            println!("No profiles to clean");
         }
     }
 
@@ -382,7 +372,6 @@ pub mod SessionHandler {
     }
 
     fn remove_credentials(profile_name: &str) -> Result<(), io::Error> {
-        println!("Saving credentials to disk");
         let aws_credentials_file = read_aws_credentials_file();
         let credentials = split_config_file(aws_credentials_file);
         let mut aws_credentials_path = env::home_dir().unwrap().display().to_string();
