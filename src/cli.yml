@@ -25,5 +25,5 @@ subcommands:
         about: Deletes all sessions
         args:
             - profile_name:
-                required: true
+                required: false
                 help: Removes config for the profile

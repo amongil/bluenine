@@ -20,12 +20,14 @@ fn main() {
         },
         ("refresh", Some(sub_m)) => {
             let profile_name = sub_m.value_of("profile_name").unwrap();
-            SessionHandler::clean(profile_name);
+            SessionHandler::clean_profile(profile_name);
             SessionHandler::create(profile_name);
         },
         ("clean", Some(sub_m)) => {
-            let profile_name = sub_m.value_of("profile_name").unwrap();
-            SessionHandler::clean(profile_name);
+            match sub_m.value_of("profile_name") {
+                Some(profile_name) => SessionHandler::clean_profile(profile_name),
+                None => SessionHandler::clean_all_profiles(),
+            }
         },
         _ => return
     }

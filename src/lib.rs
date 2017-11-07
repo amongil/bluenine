@@ -31,7 +31,7 @@ pub mod SessionHandler {
         role_arn: Option<String>,
         mfa_serial: Option<String>,
     }
-    
+
     impl AWSConfig {
         fn save(&self) -> Result<(), io::Error> {
             let mut bluenine_config_path = env::home_dir().unwrap().display().to_string();
@@ -239,7 +239,7 @@ pub mod SessionHandler {
         }
     }
 
-    pub fn clean(profile_name: &str) {
+    pub fn clean_profile(profile_name: &str) {
         let mut aws_config = load_config();
         let mut session_name = profile_name.clone().to_string();
         session_name.push_str("-session");
@@ -249,7 +249,19 @@ pub mod SessionHandler {
             aws_config.save();
             // Remove credentials also
             remove_credentials(&session_name);
+            println!("Cleaned {}", session_name);
         }
+    }
+
+    pub fn clean_all_profiles() {
+        let mut aws_config = load_config();
+        //let mut profiles = &mut aws_config.profiles;
+
+        aws_config.profiles.retain(|key, value| {
+            !key.contains("-session")
+        });
+
+        &aws_config.save();
     }
 
     fn load_config() -> AWSConfig {
