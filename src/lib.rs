@@ -4,6 +4,7 @@ extern crate time;
 extern crate rusoto_core;
 extern crate rusoto_sts;
 extern crate rusoto_dynamodb;
+extern crate chrono;
 
 pub mod SessionHandler {
     use time;
@@ -18,6 +19,7 @@ pub mod SessionHandler {
         GetSessionTokenError, AssumeRoleRequest, AssumeRoleResponse, AssumeRoleError, Credentials};
 
     use std::collections::HashMap;
+    use chrono::prelude::*;
 
     struct AWSConfig {
         profiles: HashMap<String, AWSProfile>,
@@ -212,9 +214,10 @@ pub mod SessionHandler {
     }
     pub fn show() {
         let aws_config = load_config();
-        let sys_time = time::now_utc();
-        println!("Current time: {}:{}:{}Z", format!("{:02}", sys_time.tm_hour), format!("{:02}", sys_time.tm_min),
-            format!("{:02}", sys_time.tm_sec));
+        //let sys_time = time::now_utc();
+
+        let time: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
+        println!("Current UTC time: {}", time);
         println!("Active sessions:\n");
         for (name, aws_profile) in aws_config.profiles {
             if name.contains("-session") {
