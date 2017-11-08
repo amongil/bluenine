@@ -8,6 +8,7 @@ extern crate chrono;
 
 pub mod SessionHandler {
     use time;
+    use time::Duration;
     use std::fs::{File, OpenOptions};
     use std::io::BufReader;
     use std::io;
@@ -20,7 +21,9 @@ pub mod SessionHandler {
 
     use std::collections::HashMap;
     use chrono::prelude::*;
-
+    use chrono::Timelike;
+    use chrono::Datelike;
+    
     struct AWSConfig {
         profiles: HashMap<String, AWSProfile>,
     }
@@ -217,7 +220,6 @@ pub mod SessionHandler {
         //let sys_time = time::now_utc();
 
         let time: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
-        println!("Current UTC time: {}", time);
         println!("Active sessions:\n");
         for (name, aws_profile) in aws_config.profiles {
             if name.contains("-session") {
@@ -227,13 +229,23 @@ pub mod SessionHandler {
                     let split = expiration_time.split("T");
                     let mut parts: Vec<String> = split.map(|s| s.to_string()).collect();
                     parts[1].pop(); // we know its utc
-
+                    let date_split = parts[0].split("-");
+                    let mut dates: Vec<String> = date_split.map(|s| s.to_string()).collect();
+                    let year: i32 = dates[0].parse().unwrap();
+                    let month: u32 = dates[1].parse().unwrap();
+                    let day: u32 = dates[2].parse().unwrap();    
                     let time_split = parts[1].split(":");
                     let mut times: Vec<String> = time_split.map(|s| s.to_string()).collect();
-                    let hour: i32 = times[0].parse().unwrap();
-                    let min: i32 = times[1].parse().unwrap();
-                    let sec: i32 = times[2].parse().unwrap();
-                    println!("Session \"{}\" expiring on {:02}:{:02}:{:02}Z", name, hour, min, sec);
+                    let hour: u32 = times[0].parse().unwrap();
+                    let min: u32 = times[1].parse().unwrap();
+                    let sec: u32 = times[2].parse().unwrap();
+                    let expiration_chronos = Utc.ymd(year, month, day).and_hms(hour, min, sec).signed_duration_since(time);
+                    let hours_left = expiration_chronos.num_hours()%24;
+                    let minutes_left = expiration_chronos.num_minutes()%60;
+                    let seconds_left = expiration_chronos.num_seconds()%60;
+                    println!("Session \"{}\". Time left: {}h {}m {}s", name, hours_left,
+                                                                             minutes_left,
+                                                                             seconds_left);
                 }
                 else {
                     println!("Session \"{}\" expiring on Unknown", name);
@@ -260,7 +272,13 @@ pub mod SessionHandler {
         let mut aws_config = load_config();
         //let mut profiles = &mut aws_config.profiles;
 
-        aws_config.profiles.retain(|key, value| {
+        for profile_name in aws_config.profiles.keys() {
+            if profile_name.contains("-session") {
+                remove_credentials(profile_name);
+            }
+        }
+
+        aws_config.profiles.retain(|key, _| {
             !key.contains("-session")
         });
 
