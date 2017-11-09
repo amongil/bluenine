@@ -31,3 +31,9 @@ Clean(remove) a session:
 ```
 bluenine clean <profile-name>
 ```
+
+Clean(remove) all sessions:
+
+```
+bluenine clean
+```
