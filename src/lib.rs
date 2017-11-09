@@ -49,7 +49,12 @@ pub mod SessionHandler {
 
             let mut prof = String::new();
             for (name, profile) in &self.profiles {
-                prof.push_str(&format!("[profile {}]\n", name));
+                if name == "[default]" {
+                    prof.push_str(&format!("{}\n", name));
+                }
+                else {
+                    prof.push_str(&format!("[profile {}]\n", name));
+                }
 
                 let source_profile = &profile.source_profile;
                 match source_profile {
@@ -302,18 +307,15 @@ pub mod SessionHandler {
 
             // Get the profile name from the first line
             let profile_line = lines[0].to_owned();
-
-            // Lets ignore the default for now
-            if profile_line == "[default]" {
-                continue;
-            }
-
             let split2 = profile_line.split(" ");
             let mut words: Vec<String> = split2.map(|s| s.to_string()).collect();
             let mut profile_name = String::new();
             if words.len() > 1 {
                 words[1].pop();
                 profile_name = words[1].trim_right().to_owned();
+            }
+            else { // Default profile
+                profile_name = words[0].trim_right().trim_left().to_owned();
             }
 
             let mut aws_profile = AWSProfile{
