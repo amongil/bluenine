@@ -5,6 +5,7 @@ extern crate rusoto_core;
 extern crate rusoto_sts;
 extern crate rusoto_dynamodb;
 extern crate chrono;
+extern crate colored;
 
 pub mod SessionHandler {
     use time;
@@ -23,7 +24,8 @@ pub mod SessionHandler {
     use chrono::prelude::*;
     use chrono::Timelike;
     use chrono::Datelike;
-    
+    use colored::Colorize;
+
     struct AWSConfig {
         profiles: HashMap<String, AWSProfile>,
     }
@@ -170,7 +172,6 @@ pub mod SessionHandler {
                                 Ok(_) => {},
                                 Err(err) => println!("Error saving credentials to file: {:?}", err)
                             };
-                            show();
                         },
                         Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
                     };
@@ -212,7 +213,6 @@ pub mod SessionHandler {
                                 Ok(_) => {},
                                 Err(err) => println!("Error saving credentials to file: {:?}", err)
                             };
-                            show();
                         },
                         Err(err) => panic!("Failed to get session token for profile {}: {:?}", profile_name, err),
                     };
@@ -225,7 +225,7 @@ pub mod SessionHandler {
         //let sys_time = time::now_utc();
 
         let time: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
-        println!("Active sessions:\n");
+        println!("{}\n", "Active sessions:".blue());
         for (name, aws_profile) in aws_config.profiles {
             if name.contains("-session") {
                 let mut expiration_time = get_expiration_time(&name);
@@ -248,7 +248,7 @@ pub mod SessionHandler {
                     let hours_left = expiration_chronos.num_hours()%24;
                     let minutes_left = expiration_chronos.num_minutes()%60;
                     let seconds_left = expiration_chronos.num_seconds()%60;
-                    println!("Session \"{}\". Time left: {}h {}m {}s", name, hours_left,
+                    println!("Session \"{}\". Time left: {}h {}m {}s", name.cyan().bold(), hours_left,
                                                                              minutes_left,
                                                                              seconds_left);
                 }
