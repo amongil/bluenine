@@ -14,6 +14,7 @@ fn main() {
         ("create", Some(sub_m)) => {
             let profile_name = sub_m.value_of("profile_name").unwrap();
             SessionHandler::create(profile_name);
+            SessionHandler::show();
         },
         ("show", _)=> {
             SessionHandler::show();
@@ -22,6 +23,7 @@ fn main() {
             let profile_name = sub_m.value_of("profile_name").unwrap();
             SessionHandler::clean_profile(profile_name);
             SessionHandler::create(profile_name);
+            SessionHandler::show();
         },
         ("clean", Some(sub_m)) => {
             match sub_m.value_of("profile_name") {

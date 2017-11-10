@@ -269,7 +269,6 @@ pub mod SessionHandler {
             aws_config.save();
             // Remove credentials also
             remove_credentials(&session_name);
-            println!("Cleaned {}", session_name);
         }
     }
 
