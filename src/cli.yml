@@ -18,12 +18,12 @@ subcommands:
         about: Refreshes session for the profile
         args:
             - profile_name:
-                required: true
-                help: Refreshes session for the profile
+                required: false
+                help: Refreshes sessions
 
     - clean:
         about: Deletes all sessions
         args:
             - profile_name:
                 required: false
-                help: Removes config for the profile
+                help: Deletes sessions

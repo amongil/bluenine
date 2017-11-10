@@ -271,12 +271,10 @@ pub mod SessionHandler {
             // Remove credentials also
             remove_credentials(&session_name);
         }
-        println!("{}", "Cleaned profile.".cyan());
     }
 
     pub fn clean_all_profiles() {
         let mut aws_config = load_config();
-        //let mut profiles = &mut aws_config.profiles;
 
         for profile_name in aws_config.profiles.keys() {
             if profile_name.contains("-session") {
@@ -290,6 +288,27 @@ pub mod SessionHandler {
 
         &aws_config.save();
         println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan());
+    }
+
+    pub fn refresh_all_profiles() {
+        let mut aws_config = load_config();
+
+        for (name, _) in &aws_config.profiles {
+            if name.contains("-session") {
+                let split = name.split("-session");
+                let substrings: Vec<String> = split.map(|s| s.to_string()).collect();
+                let profile_name = &substrings[0];
+                let aws_profile = &aws_config.get_profile(profile_name);
+                let source_profile = &aws_profile.source_profile;
+                match source_profile {
+                    &Some(ref source_profile) => {
+                        clean_profile(profile_name);
+                        create(profile_name);
+                    },
+                    &None => {},
+                };
+            }
+        }
     }
 
     fn load_config() -> AWSConfig {
