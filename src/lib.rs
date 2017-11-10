@@ -1,5 +1,4 @@
 extern crate regex;
-extern crate time;
 
 extern crate rusoto_core;
 extern crate rusoto_sts;
@@ -8,8 +7,6 @@ extern crate chrono;
 extern crate colored;
 
 pub mod SessionHandler {
-    use time;
-    use time::Duration;
     use std::fs::{File, OpenOptions};
     use std::io::BufReader;
     use std::io;
@@ -22,8 +19,7 @@ pub mod SessionHandler {
 
     use std::collections::HashMap;
     use chrono::prelude::*;
-    use chrono::Timelike;
-    use chrono::Datelike;
+    use chrono::Duration;
     use colored::Colorize;
 
     struct AWSConfig {
@@ -147,7 +143,7 @@ pub mod SessionHandler {
                     provider.set_profile(session_name);
                     let client = StsClient::new(default_tls_client().unwrap(), provider, Region::EuWest1);
 
-                    let mut role_arn = &aws_profile.role_arn;
+                    let role_arn = &aws_profile.role_arn;
                     let role_arn_string = role_arn.as_ref().unwrap();
                     let v: Vec<&str> = role_arn_string.split('/').collect();
 
@@ -188,7 +184,7 @@ pub mod SessionHandler {
 
                 let mfa_serial = &aws_profile.mfa_serial;
                 if mfa_serial.is_some() {
-                    print!("Enter AWS MFA code for profile [{}]: ", profile_name);
+                    print!("\u{1F4AC}  Enter AWS MFA code for profile [{}]: ", profile_name.cyan().bold());
                     stdout().flush();
                     let mut token_code = String::new();
                     stdin().read_line(&mut token_code)
@@ -222,25 +218,23 @@ pub mod SessionHandler {
     }
     pub fn show() {
         let aws_config = load_config();
-        //let sys_time = time::now_utc();
+        let time: DateTime<Utc> = Utc::now();
 
-        let time: DateTime<Utc> = Utc::now();       // e.g. `2014-11-28T12:45:59.324310806Z`
-        println!("{}\n", "Active sessions:".blue());
-        for (name, aws_profile) in aws_config.profiles {
+        for (name, _) in aws_config.profiles {
             if name.contains("-session") {
-                let mut expiration_time = get_expiration_time(&name);
+                let expiration_time = get_expiration_time(&name);
                 if expiration_time.is_ok() {
                     let expiration_time = expiration_time.unwrap();
                     let split = expiration_time.split("T");
                     let mut parts: Vec<String> = split.map(|s| s.to_string()).collect();
                     parts[1].pop(); // we know its utc
                     let date_split = parts[0].split("-");
-                    let mut dates: Vec<String> = date_split.map(|s| s.to_string()).collect();
+                    let dates: Vec<String> = date_split.map(|s| s.to_string()).collect();
                     let year: i32 = dates[0].parse().unwrap();
                     let month: u32 = dates[1].parse().unwrap();
                     let day: u32 = dates[2].parse().unwrap();    
                     let time_split = parts[1].split(":");
-                    let mut times: Vec<String> = time_split.map(|s| s.to_string()).collect();
+                    let times: Vec<String> = time_split.map(|s| s.to_string()).collect();
                     let hour: u32 = times[0].parse().unwrap();
                     let min: u32 = times[1].parse().unwrap();
                     let sec: u32 = times[2].parse().unwrap();
@@ -248,12 +242,19 @@ pub mod SessionHandler {
                     let hours_left = expiration_chronos.num_hours()%24;
                     let minutes_left = expiration_chronos.num_minutes()%60;
                     let seconds_left = expiration_chronos.num_seconds()%60;
-                    println!("Session \"{}\". Time left: {}h {}m {}s", name.cyan().bold(), hours_left,
-                                                                             minutes_left,
-                                                                             seconds_left);
+                    if expiration_chronos >= Duration::seconds(0) {
+                        println!("\t\u{1F511}  Session {}. Time left: {} {} {} \u{1F558}", name.cyan().bold(),
+                                                                                               format!("{}h",hours_left.to_string()).cyan().bold(),
+                                                                                               format!("{}m",minutes_left.to_string()).cyan().bold(),
+                                                                                               format!("{}s",seconds_left.to_string()).cyan().bold());
+                    }
+                    else {
+                        println!("\t\u{1F511}  Session {}. Time left: {} \u{1F479}", name.cyan().bold(),
+                                                                           "expired".red().bold());         
+                    }
                 }
                 else {
-                    println!("Session \"{}\" expiring on Unknown", name);
+                    println!("\t\u{1F511}  Session {} expiring on Unknown \u{1F479}", name);
                 }
             }
         }
@@ -270,6 +271,7 @@ pub mod SessionHandler {
             // Remove credentials also
             remove_credentials(&session_name);
         }
+        println!("{}", "Cleaned profile.".cyan());
     }
 
     pub fn clean_all_profiles() {
@@ -287,6 +289,7 @@ pub mod SessionHandler {
         });
 
         &aws_config.save();
+        println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan());
     }
 
     fn load_config() -> AWSConfig {
