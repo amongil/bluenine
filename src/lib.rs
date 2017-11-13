@@ -222,6 +222,10 @@ pub mod SessionHandler {
 
         for (name, _) in aws_config.profiles {
             if name.contains("-session") {
+                let default_profile: String = match env::var("AWS_DEFAULT_PROFILE") {
+                    Ok(val) => val,
+                    Err(e) => String::new(),
+                };
                 let expiration_time = get_expiration_time(&name);
                 if expiration_time.is_ok() {
                     let expiration_time = expiration_time.unwrap();
@@ -242,19 +246,39 @@ pub mod SessionHandler {
                     let hours_left = expiration_chronos.num_hours()%24;
                     let minutes_left = expiration_chronos.num_minutes()%60;
                     let seconds_left = expiration_chronos.num_seconds()%60;
-                    if expiration_chronos >= Duration::seconds(0) {
-                        println!("\u{1F511}  Session {} | Time left: {} {} {} \u{1F558}", name.cyan().bold(),
-                                                                                               format!("{}h",hours_left.to_string()).cyan().bold(),
-                                                                                               format!("{}m",minutes_left.to_string()).cyan().bold(),
-                                                                                               format!("{}s",seconds_left.to_string()).cyan().bold());
+                    let default_profile: String = match env::var("AWS_DEFAULT_PROFILE") {
+                        Ok(val) => val,
+                        Err(e) => String::new(),
+                    };
+                    if default_profile == name {
+                        if expiration_chronos >= Duration::seconds(0) {
+                            println!("\u{1F511}  Session \u{1F449}  {}  \u{1F448}  | Time left: {} {} {} \u{1F558}", name.magenta().bold(),
+                                                                                                format!("{}h",hours_left.to_string()).cyan().bold(),
+                                                                                                format!("{}m",minutes_left.to_string()).cyan().bold(),
+                                                                                                format!("{}s",seconds_left.to_string()).cyan().bold());
+                        } else {
+                            println!("\u{1F511}  Session  \u{1F449} {}  \u{1F448}  | Time left: {} \u{1F479}", name.magenta().bold(),
+                                                                                           "expired".red().bold());         
+                        }
+                    } else {
+                        if expiration_chronos >= Duration::seconds(0) {
+                            println!("\u{1F511}  Session {} | Time left: {} {} {} \u{1F558}", name.cyan().bold(),
+                                                                                                format!("{}h",hours_left.to_string()).cyan().bold(),
+                                                                                                format!("{}m",minutes_left.to_string()).cyan().bold(),
+                                                                                                format!("{}s",seconds_left.to_string()).cyan().bold());
+                        } else {
+                            println!("\u{1F511}  Session {} | Time left: {} \u{1F479}", name.cyan().bold(),
+                                                                                           "expired".red().bold());         
+                        }
                     }
-                    else {
-                        println!("\u{1F511}  Session {} | Time left: {} \u{1F479}", name.cyan().bold(),
-                                                                           "expired".red().bold());         
+
+                } else {
+                    if default_profile == name {
+                        println!("\u{1F511}  Session \u{1F449}  {}  \u{1F448}  expiring on Unknown \u{1F479}", name.magenta().bold());
+                
+                    } else {
+                        println!("\u{1F511}  Session {} expiring on Unknown \u{1F479}", name.cyan().bold());
                     }
-                }
-                else {
-                    println!("\u{1F511}  Session {} expiring on Unknown \u{1F479}", name);
                 }
             }
         }
