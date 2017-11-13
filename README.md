@@ -10,6 +10,13 @@ It supports MFA protected accounts.
 
 ## Installation
 
+### Homebrew
+
+```
+brew install amongil/tools/bluenine
+```
+
+### Others
 Just clone the repo and build using ```cargo build --release```. Place the resulting binary in your bin path.
 
 ## Usage
