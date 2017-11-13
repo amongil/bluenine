@@ -243,13 +243,13 @@ pub mod SessionHandler {
                     let minutes_left = expiration_chronos.num_minutes()%60;
                     let seconds_left = expiration_chronos.num_seconds()%60;
                     if expiration_chronos >= Duration::seconds(0) {
-                        println!("\u{1F511}  Session {}. Time left: {} {} {} \u{1F558}", name.cyan().bold(),
+                        println!("\u{1F511}  Session {} | Time left: {} {} {} \u{1F558}", name.cyan().bold(),
                                                                                                format!("{}h",hours_left.to_string()).cyan().bold(),
                                                                                                format!("{}m",minutes_left.to_string()).cyan().bold(),
                                                                                                format!("{}s",seconds_left.to_string()).cyan().bold());
                     }
                     else {
-                        println!("\u{1F511}  Session {}. Time left: {} \u{1F479}", name.cyan().bold(),
+                        println!("\u{1F511}  Session {} | Time left: {} \u{1F479}", name.cyan().bold(),
                                                                            "expired".red().bold());         
                     }
                 }
