@@ -46,7 +46,7 @@ bluenine clean
 ```
 
 ## TODOs
-- Make the config file splitter nicer (now there must be a newline after each profile chunk in config and credentials, otherwise it breaks)
+- <strike>Make the config file splitter nicer (now there must be a newline after each profile chunk in config and credentials, otherwise it breaks)</strike> *Done*
 - <strike>In the "bluenine show" command output, highlight the exported profile</strike> *Done*
 - Add a new command "bluenine use" which lets you export the profile name to the CLI. Example of usage: "bluenine use centralaccount-session"
 
