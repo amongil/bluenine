@@ -7,7 +7,7 @@ extern crate chrono;
 extern crate colored;
 extern crate linked_hash_map;
 
-pub mod SessionHandler {
+pub mod session_handler {
     use std::fs::{File, OpenOptions};
     use std::io::BufReader;
     use std::io;
@@ -15,10 +15,7 @@ pub mod SessionHandler {
     use std::io::{stdin, stdout};
     use std::env;
     use rusoto_core::{ProfileProvider, Region, default_tls_client};
-    use rusoto_sts::{Sts, StsClient, GetSessionTokenRequest, GetSessionTokenResponse, 
-        GetSessionTokenError, AssumeRoleRequest, AssumeRoleResponse, AssumeRoleError, Credentials};
-
-    use std::collections::HashMap;
+    use rusoto_sts::{Sts, StsClient, GetSessionTokenRequest, AssumeRoleRequest, Credentials};
     use chrono::prelude::*;
     use chrono::Duration;
     use colored::Colorize;
@@ -187,7 +184,11 @@ pub mod SessionHandler {
                 let mfa_serial = &aws_profile.mfa_serial;
                 if mfa_serial.is_some() {
                     print!("\u{1F4AC}  Enter AWS MFA code for profile [{}]: ", profile_name.cyan().bold());
-                    stdout().flush();
+                    let result = stdout().flush();
+                    match result {
+                        Ok(_) => {},
+                        Err(e) => println!("i/o error writing to console: {:?}", e),
+                    }
                     let mut token_code = String::new();
                     stdin().read_line(&mut token_code)
                         .ok()
@@ -226,7 +227,7 @@ pub mod SessionHandler {
             if name.contains("-session") {
                 let default_profile: String = match env::var("AWS_DEFAULT_PROFILE") {
                     Ok(val) => val,
-                    Err(e) => String::new(),
+                    Err(_) => String::new(),
                 };
                 let expiration_time = get_expiration_time(&name);
                 if expiration_time.is_ok() {
@@ -250,7 +251,7 @@ pub mod SessionHandler {
                     let seconds_left = expiration_chronos.num_seconds()%60;
                     let default_profile: String = match env::var("AWS_DEFAULT_PROFILE") {
                         Ok(val) => val,
-                        Err(e) => String::new(),
+                        Err(_) => String::new(),
                     };
                     if default_profile == name {
                         if expiration_chronos >= Duration::seconds(0) {
@@ -293,9 +294,17 @@ pub mod SessionHandler {
 
         if aws_config.contains_profile(&session_name) {
             aws_config.profiles.remove(&session_name);
-            aws_config.save();
-            // Remove credentials also
-            remove_credentials(&session_name);
+            let result = aws_config.save();
+            match result {
+                Ok(_) => println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan()),
+                Err(e) => println!("error writing new config file to disk: {:?}", e),
+            }           
+             // Remove credentials also
+            let result = remove_credentials(&session_name);
+            match result {
+                Ok(_) => {},
+                Err(e) => println!("error removing credentials for profile {}: {:?}", profile_name, e),
+            }
         }
     }
 
@@ -310,16 +319,23 @@ pub mod SessionHandler {
                 }
             }
             for profile_name in profiles_to_remove.iter() {
-                remove_credentials(profile_name);
+                let result = remove_credentials(profile_name);
+                match result {
+                    Ok(_) => {},
+                    Err(e) => println!("error removing credentials for profile {}: {:?}", profile_name, e),
+                }
                 profiles.remove(profile_name); 
             }
         }
-        aws_config.save();
-        println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan());
+        let result = aws_config.save();
+        match result {
+            Ok(_) => println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan()),
+            Err(e) => println!("error writing new config file to disk: {:?}", e),
+        }
     }
 
     pub fn refresh_all_profiles() {
-        let mut aws_config = load_config();
+        let aws_config = load_config();
 
         for (name, _) in &aws_config.profiles {
             if name.contains("-session") {
@@ -329,7 +345,7 @@ pub mod SessionHandler {
                 let aws_profile = &aws_config.get_profile(profile_name);
                 let source_profile = &aws_profile.source_profile;
                 match source_profile {
-                    &Some(ref source_profile) => {
+                    &Some(_) => {
                         clean_profile(profile_name);
                         create(profile_name);
                     },
@@ -358,7 +374,7 @@ pub mod SessionHandler {
             let profile_line = lines[0].to_owned();
             let split2 = profile_line.split(" ");
             let mut words: Vec<String> = split2.map(|s| s.to_string()).collect();
-            let mut profile_name = String::new();
+            let profile_name;
             if words.len() > 1 {
                 words[1].pop();
                 profile_name = words[1].trim_right().to_owned();
