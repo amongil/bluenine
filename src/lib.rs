@@ -5,6 +5,7 @@ extern crate rusoto_sts;
 extern crate rusoto_dynamodb;
 extern crate chrono;
 extern crate colored;
+extern crate linked_hash_map;
 
 pub mod SessionHandler {
     use std::fs::{File, OpenOptions};
@@ -21,9 +22,10 @@ pub mod SessionHandler {
     use chrono::prelude::*;
     use chrono::Duration;
     use colored::Colorize;
+    use linked_hash_map::LinkedHashMap;
 
     struct AWSConfig {
-        profiles: HashMap<String, AWSProfile>,
+        profiles: LinkedHashMap<String, AWSProfile>,
     }
 
     #[derive(Debug)]
@@ -299,18 +301,20 @@ pub mod SessionHandler {
 
     pub fn clean_all_profiles() {
         let mut aws_config = load_config();
-
-        for profile_name in aws_config.profiles.keys() {
-            if profile_name.contains("-session") {
+        {
+            let profiles = &mut aws_config.profiles;
+            let mut profiles_to_remove = Vec::new();
+            for (profile_name, _) in &*profiles {
+                if profile_name.contains("-session") {
+                    profiles_to_remove.push(profile_name.to_owned());
+                }
+            }
+            for profile_name in profiles_to_remove.iter() {
                 remove_credentials(profile_name);
+                profiles.remove(profile_name); 
             }
         }
-
-        aws_config.profiles.retain(|key, _| {
-            !key.contains("-session")
-        });
-
-        &aws_config.save();
+        aws_config.save();
         println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan());
     }
 
@@ -341,7 +345,7 @@ pub mod SessionHandler {
 
         // Create an instance of the AWSConfig struct
         let mut aws_config = AWSConfig {
-            profiles: HashMap::new()
+            profiles: LinkedHashMap::new()
         };
 
         // Iterate over profile chunks
@@ -372,6 +376,9 @@ pub mod SessionHandler {
             };
 
             for i in 1..lines.len() {
+                if lines[i] == "" {
+                    continue;
+                }
                 let split = lines[i].split(" = ");
                 let config: Vec<String> = split.map(|s| s.to_string()).collect();
                 let key = &config[0];
@@ -425,10 +432,12 @@ pub mod SessionHandler {
     }
 
     fn split_config_file(aws_config: String) -> Vec<String> {
-        let split = aws_config.split("\n\n");
-        let mut profiles: Vec<String> = split.map(|s| s.to_string()).collect();;
-
-        profiles.pop(); // Remove last element as it is always empty
+        let split = aws_config.split("\n[");
+        let mut profiles: Vec<String> = split.map(|s| s.to_string()).collect();
+        for i in 1..profiles.len() {
+            //String::from("[").push_str(&profiles[i]);
+            profiles[i] = format!("[{}", profiles[i]);
+        }
         profiles
     }
 
@@ -473,7 +482,7 @@ pub mod SessionHandler {
                 continue;
             }
             creds.push_str(&credential);
-            creds.push_str("\n\n");
+            creds.push_str("\n");
         }
         try!(file.write_all(creds.as_bytes()));
         Ok(())
