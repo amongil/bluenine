@@ -1,6 +1,6 @@
 [package]
 name = "bluenine"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Alvaro Mongil <hello@alvaromongil.com>"]
 
 [lib]
@@ -11,9 +11,6 @@ path = "src/lib.rs"
 clap = {version = "~2.19.0", features = ["yaml"]}
 rusoto_core = "0.28.0"
 rusoto_sts = "0.28.0"
-rusoto_dynamodb = "0.28.0"
-regex = "0.2"
-time = "0.1.38"
 chrono = "0.4"
 colored = "1.6"
 linked-hash-map = "0.5.0"

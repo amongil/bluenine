@@ -1,8 +1,5 @@
-extern crate regex;
-
 extern crate rusoto_core;
 extern crate rusoto_sts;
-extern crate rusoto_dynamodb;
 extern crate chrono;
 extern crate colored;
 extern crate linked_hash_map;

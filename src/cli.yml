@@ -1,5 +1,5 @@
 name: bluenine
-version: "0.1.2"
+version: "0.2.0"
 author: Alvaro Mongil <hello@alvaromongil.com>
 about: AWS Session Token Manager
 settings:

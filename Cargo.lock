@@ -1,16 +1,13 @@
 [root]
 name = "bluenine"
-version = "0.1.2"
+version = "0.2.0"
 dependencies = [
  "chrono 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.19.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "colored 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "linked-hash-map 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "regex 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_core 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "rusoto_dynamodb 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "rusoto_sts 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "time 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -510,18 +507,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rusoto_dynamodb"
-version = "0.28.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-dependencies = [
- "hyper 0.10.13 (registry+https://github.com/rust-lang/crates.io-index)",
- "rusoto_core 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 1.0.15 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "rusoto_sts"
 version = "0.28.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -898,7 +883,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum ring 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1f2a6dc7fc06a05e6de183c5b97058582e9da2de0c136eafe49609769c507724"
 "checksum rusoto_core 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d7b3e612b047b8bb093bba0446523b12f7eedafc0472c5c1beecb6f1caf5e9d6"
 "checksum rusoto_credential 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "79be5ba8b6a099306d4862556b98ddc21bf0ca518aef77e091c7abeb50f5cb07"
-"checksum rusoto_dynamodb 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)" = "4b69a7d4dd9c3885387df92550dd31dc4f605622539d72a78c367c22f8c07001"
 "checksum rusoto_sts 0.28.0 (registry+https://github.com/rust-lang/crates.io-index)" = "cc968c4447cbba01080ccc9bea58e3b893101687bc1f94c19e7dd9f0464bd93b"
 "checksum rustc-serialize 0.3.24 (registry+https://github.com/rust-lang/crates.io-index)" = "dcf128d1287d2ea9d80910b5f1120d0b8eede3fbf1abe91c40d39ea7d51e6fda"
 "checksum rustc_version 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "b9743a7670d88d5d52950408ecdb7c71d8986251ab604d4689dd2ca25c9bca69"
