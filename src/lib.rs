@@ -372,6 +372,9 @@ pub mod SessionHandler {
             };
 
             for i in 1..lines.len() {
+                if lines[i] == "" {
+                    continue;
+                }
                 let split = lines[i].split(" = ");
                 let config: Vec<String> = split.map(|s| s.to_string()).collect();
                 let key = &config[0];
@@ -425,10 +428,12 @@ pub mod SessionHandler {
     }
 
     fn split_config_file(aws_config: String) -> Vec<String> {
-        let split = aws_config.split("\n\n");
-        let mut profiles: Vec<String> = split.map(|s| s.to_string()).collect();;
-
-        profiles.pop(); // Remove last element as it is always empty
+        let split = aws_config.split("\n[");
+        let mut profiles: Vec<String> = split.map(|s| s.to_string()).collect();
+        for i in 1..profiles.len() {
+            //String::from("[").push_str(&profiles[i]);
+            profiles[i] = format!("[{}", profiles[i]);
+        }
         profiles
     }
 
@@ -473,7 +478,7 @@ pub mod SessionHandler {
                 continue;
             }
             creds.push_str(&credential);
-            creds.push_str("\n\n");
+            creds.push_str("\n");
         }
         try!(file.write_all(creds.as_bytes()));
         Ok(())
