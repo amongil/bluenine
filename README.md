@@ -1,12 +1,14 @@
 # bluenine
 An AWS Session Token Manager. Written in Rust.
 
+
+## Purpose
+To easily request and export session tokens for AWS accounts that need to be accessed from a central account (and a source profile).
+
 ## Disclaimer
-The creation of bluenine was meant as an exercise to check how fast to prototype a CLI tool is using Rust, in comparison to other languages such as Go and Python. As a result, poor error handling (lots of panics in the codebase) and duplicate code is present.
+The creation of bluenine was meant as an exercise to check how fast to prototype a CLI tool is using Rust, in comparison to other languages such as Go and Python. This is my first Rust program so please backup your config files before you run Bluenine!
 
-Having said that, I use bluenine for my day to day work with cero problems.
-
-It supports MFA protected accounts.
+Having said that, I have been using bluenine for my day to day work with cero problems.
 
 ## Installation
 
