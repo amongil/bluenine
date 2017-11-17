@@ -293,7 +293,7 @@ pub mod session_handler {
             aws_config.profiles.remove(&session_name);
             let result = aws_config.save();
             match result {
-                Ok(_) => println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan()),
+                Ok(_) => {},
                 Err(e) => println!("error writing new config file to disk: {:?}", e),
             }           
              // Remove credentials also
@@ -326,7 +326,7 @@ pub mod session_handler {
         }
         let result = aws_config.save();
         match result {
-            Ok(_) => println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan()),
+            Ok(_) => {},
             Err(e) => println!("error writing new config file to disk: {:?}", e),
         }
     }

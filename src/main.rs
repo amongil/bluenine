@@ -6,6 +6,9 @@ use clap::App;
 extern crate bluenine;
 use bluenine::session_handler;
 
+extern crate colored;
+use colored::Colorize;
+
 fn main() {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
@@ -34,8 +37,14 @@ fn main() {
         },
         ("clean", Some(sub_m)) => {
             match sub_m.value_of("profile_name") {
-                Some(profile_name) => session_handler::clean_profile(profile_name),
-                None => session_handler::clean_all_profiles(),
+                Some(profile_name) => {
+                    session_handler::clean_profile(profile_name);
+                    println!("\u{1F4A3}  {}", "Cleaned profile.".cyan())
+                },
+                None => {
+                    session_handler::clean_all_profiles();
+                    println!("\u{1F4A3}  {}", "Cleaned all profiles.".cyan());
+                },
             }
         },
         _ => return
